@@ -1,0 +1,22 @@
+#! /bin/bash
+#set -x
+
+# get HOST
+if [ -z "${1}" ]; then
+  echo "usage: rdp FQDN"
+  exit 1
+fi
+HOST=${1}
+
+# default var
+DOMAIN=`hostname -d`
+RES=`xrandr | awk '/\*\+/ {print $1}' | tail -n1`
+
+# config
+CONF="/home/OPTIVO/daniel.goeke/.config/rdp"
+if [ -f "${CONF}" ]; then
+  source ${CONF}
+fi
+
+# execute
+secret-tool lookup user ${USER} | rdesktop -5 -K -kde -g${RES} -r disk:HOME=$HOME -r clipboard:CLIPBOARD -r sound:local -u ${USER} -d ${DOMAIN} -p - ${HOST} &
