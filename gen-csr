@@ -1,0 +1,53 @@
+#! /bin/bash
+#set -x
+
+# default values
+COUNTRY="DE"
+STATE="Berlin"
+CITY="Berlin"
+COMPANY="stderror"
+COMPANYOU="master"
+MAILADDR="webmaster"
+TLSSTORE="${HOME}/wichtig/tls/"
+
+# config
+CONF="/home/OPTIVO/daniel.goeke/.config/gencsr"
+if [ -f "${CONF}" ]; then
+  source ${CONF}
+else
+  # create default config
+  echo "COUNTRY=\"${COUNTRY}\""     >> ${CONF}
+  echo "STATE=\"${STATE}\""         >> ${CONF}
+  echo "CITY=\"${CITY}\""           >> ${CONF}
+  echo "COMPANY=\"${COMPANY}\""     >> ${CONF}
+  echo "COMPANYOU=\"${COMPANYOU}\"" >> ${CONF}
+  echo "MAILADDR=\"${MAILADDR}\""   >> ${CONF}
+  echo "TLSSTORE=\"${TLSSTORE}\""   >> ${CONF}
+fi
+
+# get FQDN
+if [ -z "${1}" ]; then
+  echo "usage: gen-csr FQDN"
+  exit 1
+fi
+FQDN=${1}
+
+
+# email
+DOMAIN=$(echo ${FQDN} | awk -F\. '{print substr($0, index($0, $2))}')
+EMAIL="${MAILADDR}@${DOMAIN}"
+
+# Files
+YEAR=$(date +%Y)
+FILEBASE="${TLSSTORE}${FQDN}/${YEAR}/"
+if ! [ -d "${FILEBASE}" ]; then
+  mkdir -p ${FILEBASE}
+fi
+KEYFILE="${FILEBASE}${FQDN}.key"
+CSRFILE="${FILEBASE}${FQDN}.csr"
+
+# generate key and csr
+openssl req -new -sha256 \
+-newkey rsa:2048 -nodes -keyout ${KEYFILE} \
+-subj "/C=${COUNTRY}/ST=${STATE}/L=${CITY}/O=${COMPANY}/OU=${COMPANYOU}/emailAddress=${EMAIL}/CN=${FQDN}" \
+-out ${CSRFILE}
