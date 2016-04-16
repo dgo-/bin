@@ -1,0 +1,4 @@
+#! /bin/bash
+#set -x
+
+exec feh --bg-fill --no-xinerama "$@"
