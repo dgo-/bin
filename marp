@@ -1,0 +1,19 @@
+#! /bin/sh
+#set -x
+
+function usage {
+ echo 'marp [FQDN|IP]'
+ exit 1
+}
+
+if [ -z "${1}" ]; then
+ usage
+else
+  host="${1}"
+fi
+
+if arp ${host}  2>&1  | grep -q -e "Host name lookup failure" -e "no entry" ; then
+  sudo arping -rc 1 ${host}
+else
+  arp ${host} | awk '{if (NR == 2) print $3}'
+fi
