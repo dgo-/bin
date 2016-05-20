@@ -1,6 +1,9 @@
 #! /bin/bash
 #set -x
 
+# set password with following command
+# secret-tool store --label='My password' user $USER
+
 # get HOST
 if [ -z "${1}" ]; then
   echo "usage: rdp FQDN"
