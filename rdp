@@ -16,7 +16,7 @@ DOMAIN=`hostname -d`
 RES=`xrandr | awk '/\*\+/ {print $1}' | tail -n1`
 
 # config
-CONF="/home/OPTIVO/daniel.goeke/.config/rdp"
+CONF="${HOME}/.config/rdp"
 if [ -f "${CONF}" ]; then
   source ${CONF}
 fi
