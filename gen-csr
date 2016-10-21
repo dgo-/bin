@@ -11,7 +11,7 @@ MAILADDR="webmaster"
 TLSSTORE="${HOME}/wichtig/tls/"
 
 # config
-CONF="/home/OPTIVO/daniel.goeke/.config/gencsr"
+CONF="${HOME}/.config/gencsr"
 if [ -f "${CONF}" ]; then
   source ${CONF}
 else
