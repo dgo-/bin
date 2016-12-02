@@ -3,7 +3,6 @@
 import sys
 import os
 import subprocess
-import ldap
 import keyring
 import ConfigParser
 
@@ -12,10 +11,11 @@ import ConfigParser
 # secret-tool store --label='LDAP_URI' service LDAP_URI username LDAP_USER
 #
 # config format
-# [OPTIVO]
+# [LDAP]
 # LDAP_URI    = ldaps://ldapserver:636
 # LDAP_USER   = CN=user,DC=example,DC=com
 # LDAP_BASE   = DC=example,DC=com
+# LDAP_FILTER = SEARCH* 
 
 CONF_LDAP = os.path.expanduser('~/.config/addressbook/ldap')
 
@@ -23,8 +23,8 @@ CONF_LDAP = os.path.expanduser('~/.config/addressbook/ldap')
 def ask_osxabook(name):
     p = subprocess.Popen(["contacts", "-sSf", "%e\t%n", name], stdout=subprocess.PIPE)
     output, err = p.communicate()
-    #result = '\n'.join(output.split('\n')[1:])
-    print output
+    result = '\n'.join(output.split('\n')[1:])
+    print result
 
 # query ldap
 def ask_ldap(name, conf, section):
@@ -34,13 +34,14 @@ def ask_ldap(name, conf, section):
     ldap_base   = conf.get(section, 'LDAP_BASE') 
     ldap_filter = conf.get(section, 'LDAP_FILTER')
     ldap_pw     = keyring.get_password(ldap_uri, ldap_user)
+    ldap_filter.replace('SEARCH', search)
 
     directory = ldap.initialize(ldap_uri)
     directory.simple_bind_s(ldap_user, ldap_pw)
     results = directory.search_s(ldap_base, ldap.SCOPE_SUBTREE, ldap_filter,['cn','mail'])
     for dn, entry in results:
         if not (dn is None):
-            print entry['cn'][0] + " " + entry['mail'][0]
+            print entry['cn'][0] + "\t" + entry['mail'][0]
 
 if (len(sys.argv) == 2):
     search = sys.argv[1]
@@ -48,6 +49,7 @@ if (len(sys.argv) == 2):
         ask_osxabook(search)
 
     if (os.path.isfile(CONF_LDAP)):
+        import ldap
         ldap_conf = ConfigParser.ConfigParser()
         ldap_conf.read(CONF_LDAP)
         ldap_conf.sections()
