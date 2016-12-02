@@ -1,0 +1,59 @@
+#! /usr/bin/env python
+
+import sys
+import os
+import subprocess
+import ldap
+import keyring
+import ConfigParser
+
+# store password:
+# python >>> keyring.set_password("LDAP_URI", "LDAP_USER", "LDAP_PW")
+# secret-tool store --label='LDAP_URI' service LDAP_URI username LDAP_USER
+#
+# config format
+# [OPTIVO]
+# LDAP_URI    = ldaps://ldapserver:636
+# LDAP_USER   = CN=user,DC=example,DC=com
+# LDAP_BASE   = DC=example,DC=com
+
+CONF_LDAP = os.path.expanduser('~/.config/contacts/ldap')
+
+# query osX adressbook
+def ask_osxabook(name):
+    p = subprocess.Popen(["contacts", "-sSf", "%e\t%n", name], stdout=subprocess.PIPE)
+    output, err = p.communicate()
+    #result = '\n'.join(output.split('\n')[1:])
+    print output
+
+# query ldap
+def ask_ldap(name, conf, section):
+
+    ldap_user   = conf.get(section, 'LDAP_USER')
+    ldap_uri    = conf.get(section, 'LDAP_URI')
+    ldap_base   = conf.get(section, 'LDAP_BASE') 
+    ldap_filter = conf.get(section, 'LDAP_FILTER')
+    ldap_pw     = keyring.get_password(ldap_uri, ldap_user)
+
+    directory = ldap.initialize(ldap_uri)
+    directory.simple_bind_s(ldap_user, ldap_pw)
+    results = directory.search_s(ldap_base, ldap.SCOPE_SUBTREE, ldap_filter,['cn','mail'])
+    for dn, entry in results:
+        if not (dn is None):
+            print entry['cn'][0] + " " + entry['mail'][0]
+
+if (len(sys.argv) == 2):
+    search = sys.argv[1]
+    if (sys.platform == "darwin"):
+        ask_osxabook(search)
+
+    if (os.path.isfile(CONF_LDAP)):
+        ldap_conf = ConfigParser.ConfigParser()
+        ldap_conf.read(CONF_LDAP)
+        ldap_conf.sections()
+        for i in ldap_conf.sections(): 
+            ask_ldap(search, ldap_conf, i)
+        
+else:
+    sys.stderr.write("abook search\n")
+    sys.exit(1)
