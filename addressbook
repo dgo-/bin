@@ -17,7 +17,7 @@ import ConfigParser
 # LDAP_USER   = CN=user,DC=example,DC=com
 # LDAP_BASE   = DC=example,DC=com
 
-CONF_LDAP = os.path.expanduser('~/.config/contacts/ldap')
+CONF_LDAP = os.path.expanduser('~/.config/addressbook/ldap')
 
 # query osX adressbook
 def ask_osxabook(name):
@@ -55,5 +55,5 @@ if (len(sys.argv) == 2):
             ask_ldap(search, ldap_conf, i)
         
 else:
-    sys.stderr.write("abook search\n")
+    sys.stderr.write("addressbook search\n")
     sys.exit(1)
