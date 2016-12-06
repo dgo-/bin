@@ -15,7 +15,8 @@ import ConfigParser
 # LDAP_URI    = ldaps://ldapserver:636
 # LDAP_USER   = CN=user,DC=example,DC=com
 # LDAP_BASE   = DC=example,DC=com
-# LDAP_FILTER = SEARCH* 
+# LDAP_FILTER = *SEARCH* (Search will me replaced by the search string)
+#             = (|(&(objectclass=person)(userAccountControl=512)(mail=*SEARCH*))(&(objectclass=group)(mail=*SEARCH*)))
 
 CONF_LDAP = os.path.expanduser('~/.config/addressbook/ldap')
 
@@ -34,11 +35,11 @@ def ask_ldap(name, conf, section):
     ldap_base   = conf.get(section, 'LDAP_BASE') 
     ldap_filter = conf.get(section, 'LDAP_FILTER')
     ldap_pw     = keyring.get_password(ldap_uri, ldap_user)
-    ldap_filter.replace('SEARCH', search)
+    filter      = ldap_filter.replace('SEARCH', name)
 
     directory = ldap.initialize(ldap_uri)
     directory.simple_bind_s(ldap_user, ldap_pw)
-    results = directory.search_s(ldap_base, ldap.SCOPE_SUBTREE, ldap_filter,['cn','mail'])
+    results = directory.search_s(ldap_base, ldap.SCOPE_SUBTREE, filter,['cn','mail'])
     for dn, entry in results:
         if not (dn is None):
             print entry['cn'][0] + "\t" + entry['mail'][0]
