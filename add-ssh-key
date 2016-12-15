@@ -1,0 +1,20 @@
+#! /bin/bash
+#set -x
+
+# store password
+# secret-tool store --label='ssh' ssh_key $USER
+
+passphrase=`/usr/bin/secret-tool lookup ssh_key ${USER}`
+
+if [ "$passphrase" = "" ]; then
+  # without passphrase
+  ssh-add
+else
+  # with passphrase
+  expect << EOF
+  spawn ssh-add
+  expect "Enter passphrase"
+  send "$passphrase\r"
+  expect eof
+EOF
+fi
