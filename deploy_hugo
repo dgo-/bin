@@ -1,0 +1,51 @@
+#! /bin/bash
+#set -x
+
+RSYNC="rsync -az --delete public/"
+HUGO="hugo --quiet"
+
+CONF="${HOME}/.config/deploy_hugo.conf"
+# conf looks like
+#------------------
+#blog.stderror.net;/User/foobar/project/websites/blog.stderror.net;blog.stderror.net:/var/www/blog.stderror.net
+
+# deploy function
+function deploy {
+  local name=${1}
+  local path_local=${2}
+  local path_remote=${3}
+
+  cd ${path_local}
+  ${HUGO}
+  if [ ${?} -eq 0 ]; then 
+    find ./public -type f -exec chmod 644 {} + 
+    find ./public -type d -exec chmod 755 {} +
+    ${RSYNC} ${path_remote}
+    if [ ${?} -eq 0 ]; then 
+      echo "build and deploy website ${name}"
+    else
+      echo "Failed to deploy website ${name}"
+    fi
+  else 
+    echo "Failed to build website ${name}"
+  fi
+}
+
+if [ ! -f ${CONF} ]; then 
+  echo "config file not exists"
+  exit 1
+fi 
+
+if [ -n "${1}" ]; then
+  website=$(awk     -F\; -v website="${1}" '{if ($1 == website) {print $1}}' ${CONF})
+  local_path=$(awk  -F\; -v website="${1}" '{if ($1 == website) {print $2}}' ${CONF})
+  remote_path=$(awk -F\; -v website="${1}" '{if ($1 == website) {print $3}}' ${CONF})
+  deploy "${website}" "${local_path}" "${remote_path}"
+else 
+	while IFS='' read -r line || [[ -n "$line" ]]; do
+		website=$(echo "${line}"     | awk -F\; '{print $1}')
+		local_path=$(echo  "{$line}" | awk -F\; '{print $2}')
+		remote_path=$(echo "${line}" | awk -F\; '{print $3}')
+		deploy "${website}" "${local_path}" "${remote_path}"
+	done < "${CONF}"
+fi 
